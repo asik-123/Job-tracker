@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ta"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Job Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Thambi+2:wght@700&family=Noto+Sans+Tamil:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef3f1;--card:#fff;--ink:#14262b;--mute:#5b6f73;--acc:#0f7a6b;--gold:#f2a900;--line:#d3dfdc;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1c1f;--card:#172a2e;--ink:#e8f1ef;--mute:#93a9ad;--acc:#3ec5ae;--line:#284247}}
+:root[data-theme="dark"]{--bg:#0f1c1f;--card:#172a2e;--ink:#e8f1ef;--mute:#93a9ad;--acc:#3ec5ae;--line:#284247}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Noto Sans Tamil",system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:20px 16px 48px}
+h1{font:700 1.9rem/1.2 "Baloo Thambi 2",system-ui,sans-serif;margin:8px 0 4px}
+.sub{color:var(--mute);margin:0 0 18px}
+nav{display:flex;gap:8px;margin-bottom:16px}
+nav button{flex:1;padding:10px;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font:600 1rem "Noto Sans Tamil",sans-serif;cursor:pointer}
+nav button[aria-selected=true]{border-color:var(--acc);background:var(--acc);color:#fff}
+:root:not([data-theme="light"]) nav button[aria-selected=true]{color:#062a24}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+textarea,input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:110px;resize:vertical}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+label{display:block;font-weight:600;font-size:.9rem;margin:10px 0 4px}
+.out{margin-top:12px;min-height:110px;padding:12px;border-radius:8px;background:var(--bg);border:1px dashed var(--acc);font-size:1.25rem;white-space:pre-wrap;word-break:break-word}
+.btn{margin-top:12px;padding:10px 18px;border:0;border-radius:8px;background:var(--gold);color:#241a00;font:600 1rem "Noto Sans Tamil",sans-serif;cursor:pointer}
+.tip{color:var(--mute);font-size:.85rem;margin-top:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px}
+.stats span{padding:4px 12px;border-radius:99px;border:1px solid var(--line);font-size:.85rem}
+.job{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.job b{display:block}.job small{color:var(--mute)}
+.job select{width:auto;padding:4px}
+.job .x{background:none;border:0;color:var(--mute);cursor:pointer;font-size:.85rem;text-decoration:underline}
+.empty{color:var(--mute);padding:14px 0}
+[hidden]{display:none!important}
+</style></head>
+<body><main>
+<h1>Job Tracker</h1>
+<p class="sub">Ella applications-um oru edathula track pannu.</p>
+
+
+<section id="p2">
+<div class="grid">
+<div><label for="co">Company</label><input id="co" placeholder="Zoho"></div>
+<div><label for="ro">Role</label><input id="ro" placeholder="Junior Web Developer"></div>
+<div><label for="st">Status</label><select id="st"><option>Wishlist</option><option selected>Applied</option><option>Interview</option><option>Offer</option><option>Rejected</option></select></div>
+<div><label for="dt">Date</label><input id="dt" type="date"></div>
+</div>
+<label for="nt">Notes</label><input id="nt" placeholder="Interview date, HR name, link...">
+<button class="btn" id="add">Add job</button>
+<div class="stats" id="stats"></div>
+<div id="list"></div>
+</section>
+</main>
+<script>
+/* ---------- Job tracker ---------- */
+const KEY='ashik-jobs';
+let jobs=[];
+try{jobs=JSON.parse(localStorage.getItem(KEY)||'[]');}catch(_){jobs=[];}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(jobs));}catch(_){}};
+const ST=['Wishlist','Applied','Interview','Offer','Rejected'];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function render(){
+  document.getElementById('stats').innerHTML=ST.map(s=>`<span>${s}: ${jobs.filter(j=>j.st===s).length}</span>`).join('');
+  document.getElementById('list').innerHTML=jobs.length?jobs.map((j,i)=>`
+   <div class="job"><div><b>${esc(j.co)}</b>${esc(j.ro)}<br><small>${esc(j.dt||'')} ${esc(j.nt||'')}</small></div>
+   <div><select data-i="${i}" aria-label="Status">${ST.map(s=>`<option${s===j.st?' selected':''}>${s}</option>`).join('')}</select><br>
+   <button class="x" data-d="${i}">Delete</button></div></div>`).join(''):'<div class="empty">Innum jobs illa. Mela form-la first application add pannu.</div>';
+}
+document.getElementById('add').onclick=()=>{
+  const g=id=>document.getElementById(id).value.trim();
+  if(!g('co')){document.getElementById('co').focus();return;}
+  jobs.unshift({co:g('co'),ro:g('ro'),st:g('st'),dt:g('dt'),nt:g('nt')});
+  save();render();
+  ['co','ro','nt'].forEach(id=>document.getElementById(id).value='');
+};
+document.getElementById('list').addEventListener('change',e=>{if(e.target.dataset.i){jobs[e.target.dataset.i].st=e.target.value;save();render();}});
+document.getElementById('list').addEventListener('click',e=>{if(e.target.dataset.d){jobs.splice(e.target.dataset.d,1);save();render();}});
+render();
+</script></body></html>
